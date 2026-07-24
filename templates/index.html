@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="toolbar">
+    <form method="get" action="{{ url_for('index') }}" class="date-picker">
+      <label for="date">Viewing</label>
+      <input type="date" id="date" name="date" value="{{ selected_date }}" />
+      <button type="submit">Go</button>
+      {% if selected_date != today %}
+        <a class="link" href="{{ url_for('index') }}">Jump to today</a>
+      {% endif %}
+    </form>
+  </section>
+
+  <section class="book-panel">
+    <h2>New booking</h2>
+    <form method="post" action="{{ url_for('book') }}" class="book-form">
+      <input type="hidden" name="date" value="{{ selected_date }}" />
+      <div class="field">
+        <label for="room_id">Room</label>
+        <select id="room_id" name="room_id" required>
+          {% for room in rooms %}
+            <option value="{{ room['id'] }}">
+              {{ room['name'] }} (seats {{ room['capacity'] }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="title">Title</label>
+        <input id="title" name="title" placeholder="Sprint planning" required />
+      </div>
+      <div class="field">
+        <label for="booked_by">Booked by</label>
+        <input id="booked_by" name="booked_by" placeholder="Your name" required />
+      </div>
+      <div class="field">
+        <label for="start_time">Start</label>
+        <input type="time" id="start_time" name="start_time" required />
+      </div>
+      <div class="field">
+        <label for="end_time">End</label>
+        <input type="time" id="end_time" name="end_time" required />
+      </div>
+      <button type="submit" class="primary">Book room</button>
+    </form>
+  </section>
+
+  <section class="rooms">
+    <h2>Schedule for {{ selected_date }}</h2>
+    <div class="room-grid">
+      {% for room in rooms %}
+        <article class="room-card">
+          <header>
+            <h3>{{ room['name'] }}</h3>
+            <span class="meta">{{ room['location'] }} · seats {{ room['capacity'] }}</span>
+          </header>
+          {% set day_bookings = bookings_by_room.get(room['id'], []) %}
+          {% if day_bookings %}
+            <ul class="booking-list">
+              {% for b in day_bookings %}
+                <li class="booking">
+                  <div class="booking-time">{{ b['start_time'] }}–{{ b['end_time'] }}</div>
+                  <div class="booking-body">
+                    <div class="booking-title">{{ b['title'] }}</div>
+                    <div class="booking-by">{{ b['booked_by'] }}</div>
+                  </div>
+                  <form
+                    method="post"
+                    action="{{ url_for('cancel', booking_id=b['id']) }}"
+                  >
+                    <input type="hidden" name="date" value="{{ selected_date }}" />
+                    <button type="submit" class="cancel" title="Cancel booking">✕</button>
+                  </form>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="empty">No bookings — free all day.</p>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}
